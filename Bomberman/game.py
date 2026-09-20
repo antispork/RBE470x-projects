@@ -4,6 +4,8 @@ import colorama
 import pygame
 import math
 
+import os
+
 class Game:
     """Game class"""
 
@@ -49,6 +51,7 @@ class Game:
             return gm
 
     def load_gui(self, board_width, board_height):
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "0,30"
         pygame.init()
         self.height = 24 * board_height
         self.width = 24 * board_width
