@@ -52,7 +52,7 @@ MOVES = [(dx, dy)
          for dy in (-1, 0, 1)]
 
 
-class MyCharacter(CharacterEntity):
+class TestCharacter(CharacterEntity):
     """Our Bomberman agent."""
 
 
