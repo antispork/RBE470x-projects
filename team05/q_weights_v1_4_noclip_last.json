@@ -1,0 +1,41 @@
+{
+  "features": [
+    "bias",
+    "progress",
+    "exit_disc",
+    "mon_adj",
+    "mon_d2",
+    "mon_d3",
+    "mon_dist",
+    "ahead_adj",
+    "ahead_d2",
+    "escape",
+    "in_blast",
+    "blast_urg",
+    "blast_steps",
+    "wait",
+    "dies",
+    "wins"
+  ],
+  "weights": {
+    "bias": -6.123998737039573,
+    "progress": 0.17075859881742744,
+    "exit_disc": -2.626093807897343,
+    "mon_adj": -1.7084085563538918,
+    "mon_d2": 2.0007669714251404,
+    "mon_d3": 1.4930098714622144,
+    "mon_dist": 6.033671726647907,
+    "ahead_adj": -0.8272489789518351,
+    "ahead_d2": -0.3955980964083289,
+    "escape": 1.4679294464586623,
+    "in_blast": 1.671006964468643,
+    "blast_urg": -4.772127221295633,
+    "blast_steps": -6.199182021622489,
+    "wait": -0.1886764511672894,
+    "dies": -10.0,
+    "wins": 10.0
+  },
+  "episodes": 5000,
+  "alpha": 0.0019999999999999983,
+  "gamma": 0.97
+}

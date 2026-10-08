@@ -1,0 +1,52 @@
+{
+  "features": [
+    "bias",
+    "progress",
+    "exit_disc",
+    "mon_adj",
+    "mon_d2",
+    "mon_d3",
+    "mon_dist",
+    "ahead_adj",
+    "ahead_d2",
+    "escape",
+    "in_blast",
+    "blast_urg",
+    "blast_steps",
+    "wait",
+    "dies",
+    "wins"
+  ],
+  "weights": {
+    "bias": 0.30207304373264393,
+    "progress": 0.19444262429419867,
+    "exit_disc": 0.0,
+    "mon_adj": -5.484366918703358,
+    "mon_d2": -0.7064578501762251,
+    "mon_d3": -0.09152445438365031,
+    "mon_dist": 0.4018600219553877,
+    "ahead_adj": -0.82817767080304,
+    "ahead_d2": -0.191333635089895,
+    "escape": 2.600505905116779,
+    "in_blast": 0.0,
+    "blast_urg": -5.182434320738801,
+    "blast_steps": -3.222473801083112,
+    "wait": -0.26933242126339635,
+    "dies": -10.0,
+    "wins": 10.0
+  },
+  "episodes": 1250,
+  "alpha": 0.0019999999999999983,
+  "gamma": 0.97,
+  "meta": {
+    "kind": "best checkpoint",
+    "checkpoint_episode": 1250,
+    "exit_rate": 0.79,
+    "mean_score": 2913.31,
+    "checkpoint_games_per_scenario": 50,
+    "scenarios": "2:2,2:3,2:4,2:4,2:5,2:5,2:5",
+    "shield": false,
+    "smart_bomb": true,
+    "max_steps": 2500
+  }
+}

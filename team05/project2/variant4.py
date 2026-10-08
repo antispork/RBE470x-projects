@@ -1,5 +1,6 @@
 # This is necessary to find the main code
 import sys
+import os
 sys.path.insert(0, '../../bomberman')
 sys.path.insert(1, '..')
 
@@ -10,10 +11,11 @@ from monsters.selfpreserving_monster import SelfPreservingMonster
 
 # TODO This is your code!
 sys.path.insert(1, '../teamNN')
-from testcharacter import TestCharacter
+from qlearningchararacter import TestCharacter
+from qlearning import ApproxQLearner, WEIGHTS_FILE, FEATURES, WEIGHT_SIGNS, ALPHA, GAMMA, _HERE
 
 # Create the game
-random.seed(123) # TODO Change this if you want different random choices
+random.seed(random.randint(1,1000000)) # TODO Change this if you want different random choices
 g = Game.fromfile('map.txt')
 g.add_monster(SelfPreservingMonster("aggressive", # name
                                     "A",          # avatar
@@ -22,10 +24,16 @@ g.add_monster(SelfPreservingMonster("aggressive", # name
 ))
 
 # TODO Add your character
+learner = ApproxQLearner.load(os.path.join(_HERE, "q_weights_v1_4_noclip.json"))
 g.add_character(TestCharacter("me", # name
                               "C",  # avatar
-                              0, 0  # position
+                              0, 0,  # position
+                              mode="qlearning",
+                              shield=True,
+                              smart_bomb=True,
+                              learner=learner
 ))
 
+
 # Run!
-g.go()
+g.go(200)
