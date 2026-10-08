@@ -41,6 +41,9 @@ USAGE  (run from anywhere, e.g. from the team05 folder)
     # monsters preempt BOMB). Then play with TestCharacter(..., smart_bomb=True) too!
     python train_qlearning.py --smart-bomb
 
+    # ... plus the adaptive threat radius (3 instead of 4 while 2+ monsters are alive)
+    python train_qlearning.py --smart-bomb --adaptive-threat
+
 WEIGHT SIGNS
     While training, every weight is kept on its sensible side of zero (danger
     features can only be penalties, good features can only be rewards; see
@@ -162,13 +165,14 @@ def game_over(world):
     return not any(world.characters.values())
 
 
-def run_episode(project, variant, learner, training, shield, max_steps, seed, smart_bomb=False):
+def run_episode(project, variant, learner, training, shield, max_steps, seed, smart_bomb=False,
+                adaptive_threat=False):
     """Play one game. Returns (outcome, steps, score, q_updates); outcome in exit/dead/timeout."""
     random.seed(seed)
     world = make_world(project, variant)
     me = TestCharacter("me", "C", 0, 0, mode="qlearning",
                        learner=learner, training=training, shield=shield,
-                       smart_bomb=smart_bomb)
+                       smart_bomb=smart_bomb, adaptive_threat=adaptive_threat)
     world.add_character(me)
 
     outcome, steps = "timeout", 0
@@ -190,12 +194,14 @@ def run_episode(project, variant, learner, training, shield, max_steps, seed, sm
 
 #  Training / evaluation drivers
 
-def eval_stats(scenarios, episodes, learner, shield, max_steps, seed, smart_bomb=False):
+def eval_stats(scenarios, episodes, learner, shield, max_steps, seed, smart_bomb=False,
+               adaptive_threat=False):
     """Greedy play, no learning, nothing printed. Returns [(project, variant, [results])]."""
     learner.epsilon = 0.0
     rows = []
     for (p, v) in scenarios:
-        rows.append((p, v, [run_episode(p, v, learner, False, shield, max_steps, seed + i, smart_bomb)
+        rows.append((p, v, [run_episode(p, v, learner, False, shield, max_steps, seed + i, smart_bomb,
+                                        adaptive_threat)
                             for i in range(episodes)]))
     return rows
 
@@ -210,9 +216,11 @@ def summarize(rows):
             "score":   sum(r[2] for r in results) / float(n)}
 
 
-def evaluate(scenarios, episodes, learner, shield, max_steps, seed, smart_bomb=False):
+def evaluate(scenarios, episodes, learner, shield, max_steps, seed, smart_bomb=False,
+             adaptive_threat=False):
     """Greedy play, no learning. Prints one line per scenario."""
-    rows = eval_stats(scenarios, episodes, learner, shield, max_steps, seed, smart_bomb)
+    rows = eval_stats(scenarios, episodes, learner, shield, max_steps, seed, smart_bomb,
+                      adaptive_threat)
     for (p, v, results) in rows:
         n_exit = sum(1 for r in results if r[0] == "exit")
         n_dead = sum(1 for r in results if r[0] == "dead")
@@ -251,6 +259,7 @@ def save_best(args, learner, best):
         "scenarios": args.scenarios,
         "shield": not args.no_shield,
         "smart_bomb": args.smart_bomb,
+        "adaptive_threat": args.adaptive_threat,
         "max_steps": args.max_steps})
 
 
@@ -270,7 +279,8 @@ def train(args, scenarios, learner):
         """Evaluate the current weights on the fixed test games; keep them if best so far."""
         nonlocal best, last_ckpt_ep
         st = summarize(eval_stats(test_scenarios, args.checkpoint_games, learner, shield,
-                                  args.max_steps, args.seed + 777, args.smart_bomb))
+                                  args.max_steps, args.seed + 777, args.smart_bomb,
+                                  args.adaptive_threat))
         rate = st["exit"] / float(max(st["n"], 1))
         better = best is None or (rate, st["score"]) > (best["exit_rate"], best["score"])
         prev = "" if best is None else "  (best so far %.1f%%)" % (100 * best["exit_rate"])
@@ -298,7 +308,7 @@ def train(args, scenarios, learner):
             p, v = rng.choice(scenarios)
             outcome, steps, score, upd = run_episode(
                 p, v, learner, True, shield, args.max_steps,
-                args.seed * 1000003 + ep, args.smart_bomb)
+                args.seed * 1000003 + ep, args.smart_bomb, args.adaptive_threat)
             learner.episodes += 1
             done_eps = ep
             window.append(outcome)
@@ -378,6 +388,9 @@ def main():
     ap.add_argument("--smart-bomb", action="store_true",
                     help="TestCharacter(smart_bomb=True): walk to the blocking wall before "
                          "bombing, reachable monsters preempt BOMB (train AND play with it)")
+    ap.add_argument("--adaptive-threat", action="store_true",
+                    help="TestCharacter(adaptive_threat=True), needs --smart-bomb: EVADE radius 3 "
+                         "instead of 4 while 2+ monsters are alive (train AND play with it)")
     ap.add_argument("--no-sign-constraints", action="store_true",
                     help="let weights take any sign (default: keep them on the side given by "
                          "WEIGHT_SIGNS in qlearning.py)")
@@ -407,9 +420,12 @@ def main():
             for k in FEATURES:
                 learner.w[k] = 0.0
 
-    print("scenarios: %s   shield: %s   smart_bomb: %s   sign constraints: %s   alpha %s  gamma %g"
+    if args.adaptive_threat and not args.smart_bomb:
+        ap.error("--adaptive-threat only has an effect together with --smart-bomb")
+    print("scenarios: %s   shield: %s   smart_bomb: %s%s   sign constraints: %s   alpha %s  gamma %g"
           % (scenarios, "off" if args.no_shield else "on",
-             "on" if args.smart_bomb else "off", "on" if constrain else "off",
+             "on" if args.smart_bomb else "off", " (adaptive threat)" if args.adaptive_threat else "",
+             "on" if constrain else "off",
              ("%g" % args.alpha) if args.alpha_end is None else ("%g -> %g" % (args.alpha, args.alpha_end)),
              args.gamma))
 
@@ -417,7 +433,7 @@ def main():
         n = args.eval_episodes or 10
         print("Evaluating (greedy, no learning, no saving):")
         evaluate(unique(scenarios), n, learner, not args.no_shield, args.max_steps, args.seed + 777,
-                 args.smart_bomb)
+                 args.smart_bomb, args.adaptive_threat)
         return
 
     if constrain:
@@ -434,7 +450,7 @@ def main():
         print("Evaluating (greedy, no learning%s):"
               % (", held-out seeds" if args.checkpoint_every > 0 else ""))
         evaluate(unique(scenarios), args.eval_episodes, learner, not args.no_shield,
-                 args.max_steps, seed, args.smart_bomb)
+                 args.max_steps, seed, args.smart_bomb, args.adaptive_threat)
 
 
 if __name__ == "__main__":

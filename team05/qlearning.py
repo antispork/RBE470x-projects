@@ -113,6 +113,24 @@ DEFAULT_WEIGHTS = {
     "dies":        -10.0,
     "wins":         10.0,
 }
+# DEFAULT_WEIGHTS = {
+#     "bias":        0.0,
+#     "progress":      0.0,
+#     "exit_disc":    0.0,
+#     "mon_adj":     0.0,
+#     "mon_d2":       0.0,
+#     "mon_d3":       0.0,
+#     "mon_dist":     0.0,
+#     "ahead_adj":    0.0,
+#     "ahead_d2":     0.0,
+#     "escape":        0.0,
+#     "in_blast":     0.0,
+#     "blast_urg":    0.0,
+#     "blast_steps":  0.0,
+#     "wait":          0.0,
+#     "dies":        0.0,
+#     "wins":         0.0,
+# }
 
 # Allowed sign of each weight while TRAINING (+1: weight >= 0, -1: weight <= 0,
 # missing: free).  Every update that would push a weight to the wrong side of

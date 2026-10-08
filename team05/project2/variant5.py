@@ -29,14 +29,15 @@ g.add_monster(SelfPreservingMonster("aggressive", # name
 ))
 
 # TODO Add your character
-learner = ApproxQLearner.load(os.path.join(_HERE, "q_weights_v5_noclip.json"))
+learner = ApproxQLearner.load(os.path.join(_HERE, "q_weights_v5.json"))
 g.add_character(TestCharacter("me", # name
                               "C",  # avatar
                               0, 0,  # position
                               mode="qlearning",
                               shield=True,
                               smart_bomb=True,
-                              learner=learner
+                              learner=learner,
+                              adaptive_threat=True
 ))
 
 # Run!

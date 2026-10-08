@@ -26,6 +26,10 @@
 #        * exit walled off -> SEEK_WALL: walk to the wall that really blocks the
 #          route to the exit, and BOMB only when that wall is in blast range
 #      Everything else is unchanged. The two parts only work well together.
+#      Option `adaptive_threat` (off by default, needs smart_bomb): the EVADE radius is
+#      REACHABLE_THREAT with one monster on the board but only REACHABLE_THREAT_MULTI
+#      with two or more, so the agent is not stuck hovering (and never bombing) when
+#      several monsters keep one of them within reach.
 
 
 import sys
@@ -68,6 +72,8 @@ DEFAULT_MODE    = "expectimax"   # used when TestCharacter(..., mode=None)
 
 DEFAULT_SMART_BOMB = False       # used when TestCharacter(..., smart_bomb=None)
 REACHABLE_THREAT   = 4           # smart_bomb: a monster this many STEPS away (by path) -> EVADE
+DEFAULT_ADAPTIVE_THREAT = False  # used when TestCharacter(..., adaptive_threat=None)
+REACHABLE_THREAT_MULTI = 3       # adaptive_threat: the EVADE radius when 2+ monsters are alive
 WALL_COST          = 6.0         # smart_bomb: extra cost of "walking through" a wall when planning
 
 
@@ -83,7 +89,8 @@ class TestCharacter(CharacterEntity):
 
 
     def __init__(self, name, avatar, x, y, depth=None,
-                 mode=None, learner=None, training=False, shield=True, smart_bomb=None):
+                 mode=None, learner=None, training=False, shield=True, smart_bomb=None,
+                 adaptive_threat=None):
         """
         mode      "expectimax" or "qlearning" (None -> DEFAULT_MODE)
         learner   (qlearning) an ApproxQLearner to use / share; None -> load q_weights.json
@@ -91,6 +98,9 @@ class TestCharacter(CharacterEntity):
         shield    (qlearning) True -> hard safety filter on the Q policy's actions
         smart_bomb  True -> walk to the blocking wall before bombing and let reachable
                     monsters preempt BOMB (None -> DEFAULT_SMART_BOMB)
+        adaptive_threat  (needs smart_bomb) True -> the EVADE radius is REACHABLE_THREAT_MULTI
+                    instead of REACHABLE_THREAT while 2+ monsters are alive
+                    (None -> DEFAULT_ADAPTIVE_THREAT)
         """
         super().__init__(name, avatar, x, y)
         self.mode = DEFAULT_MODE if mode is None else mode
@@ -98,6 +108,8 @@ class TestCharacter(CharacterEntity):
             raise ValueError("mode must be one of %s, not %r" % (MODES, self.mode))
         self.smart_bomb = DEFAULT_SMART_BOMB if smart_bomb is None else bool(smart_bomb)
         self.wall_move  = (0, 0)         # smart_bomb: the step chosen for SEEK_WALL
+        self.adaptive_threat = (DEFAULT_ADAPTIVE_THREAT if adaptive_threat is None
+                                else bool(adaptive_threat))
         self.use_q   = (self.mode == "qlearning")
         self.qpolicy = (QPolicy(self, learner=learner, training=training, shield=shield)
                         if self.use_q else None)
@@ -609,7 +621,7 @@ class TestCharacter(CharacterEntity):
             return e.character.name
         return None
 
-    
+
     #  SMART BOMBING (only used when smart_bomb is on)
 
     def smart_state(self, wrld, me, my_d):
@@ -620,7 +632,10 @@ class TestCharacter(CharacterEntity):
         if wrld.exitcell is None:
             return None
         # A monster that can actually walk to us comes before any bombing.
-        if self.region_threat(wrld, me) <= REACHABLE_THREAT:
+        radius = REACHABLE_THREAT
+        if self.adaptive_threat and len(self.monster_list(wrld)) >= 2:
+            radius = REACHABLE_THREAT_MULTI
+        if self.region_threat(wrld, me) <= radius:
             return "EVADE"
         if my_d is not None:
             return None                # exit reachable: original rules

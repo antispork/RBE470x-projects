@@ -23,7 +23,7 @@ g.add_monster(StupidMonster("stupid", # name
 ))
 
 # TODO Add your character
-learner = ApproxQLearner.load(os.path.join(_HERE, "q_weights_v1_4_noclip.json"))
+learner = ApproxQLearner.load(os.path.join(_HERE, "q_weights_v1_4.json"))
 g.add_character(TestCharacter("me", # name
                               "C",  # avatar
                               0, 0,  # position
